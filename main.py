@@ -35,17 +35,17 @@ We can select to view monthly or daily data for the rest of the charts and graph
 
 @st.cache
 def day_df():
-    df = pd.read_csv('densmore_b/data/day.csv')
+    df = pd.read_csv('data/day.csv')
     return df.sort_values(by='date_range_start')
 
 @st.cache
 def month_df():
-    df = pd.read_csv('densmore_b/data/month.csv')
+    df = pd.read_csv('data/month.csv')
     return df.sort_values(by='date_range_start')
 
 @st.cache
 def state_df():
-    df = gpd.read_file('densmore_b/data/state/cb_2021_us_state_20m.shp')
+    df = gpd.read_file('data/state/cb_2021_us_state_20m.shp')
     return df
 
 ## displaying tables
