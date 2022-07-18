@@ -1,9 +1,11 @@
 from copy import deepcopy
+from turtle import width
 import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
 import geopandas as gpd
 import matplotlib.pyplot as plt
+import altair as alt
 import mpld3
 import datetime as date
 
@@ -13,9 +15,7 @@ st.markdown("""
 For this application, I will be exploring the Safegraph data that \
 includes where people go before or after they visit a Chipotle. \
 The data we have includes both monthly and daily data.
-""")
 
-st.markdown("""
 I downloaded data from databricks after selecting what I needed.
 
 ```python
@@ -68,8 +68,10 @@ st.write("""
 
 ## States with most visits
 
-We can view states individually to see their Chipotle locations. The first map is shows \
-a heat map of Chipotle's with the most visits. The second allows you to zoom in an see the street.
+We can view states individually to see their Chipotle locations. The first map shows \
+a heat map of Chipotle's with the most visits. The second allows you to zoom in \
+and get a better sense of where these locations are. Unfortunately, the data for the \
+same day or month visits is not available.
 """)
 
 def plot_state(state, df):
@@ -77,18 +79,20 @@ def plot_state(state, df):
     d = df
     states = state_df()
     fig, ax = plt.subplots()
+    plt.title(f"Chipotle Stores in {state}")
+
     d[d['region'] == state.lower()].plot(x='longitude', \
         y='latitude', kind='scatter', c='raw_visitor_counts', colormap='turbo', ax=ax)
     
     states[states["STUSPS"] == state].boundary.plot(ax=ax)
-    
+
     fig_html = mpld3.fig_to_html(fig)
     return fig_html
 
 
 state = st.selectbox(
     "Select a state",
-    (state_df().STUSPS.sort_values().to_list())
+    (state_df().STUSPS.sort_values().to_list()), key=1
 )
 
 components.html(plot_state(state, df), height=500)
@@ -96,9 +100,9 @@ st.map(df[df['region'] == state.lower()])
 
 ## table to with filter for most visits
 st.write("""
-After selecting a state, we can see which places that people visit the same day or month. \
-
-We can now look at the amount of visits to other places.
+After selecting a state, we can see which places that people visit before or after Chipotle \
+the same day or month. This data is grouped by city and place to see how many visits that store \
+received.
 """)
 
 option = st.selectbox(
@@ -145,7 +149,9 @@ except:
 st.write("""
 # What places do people visit after Chipotle around Holidays?
 
-We will now look at a chart of places around holidays with the most visits nation wide.
+The holidays is a special time where people visits family and visit stores. \
+Chipotle is also a popular place for people to visit around different holidays. \
+This charts show the top 10 most popular places for people to visit after they visit Chipotle.
 """)
 
 holiday = st.selectbox(
@@ -155,15 +161,12 @@ holiday = st.selectbox(
 )
 
 holiday_dict = {'New Years':(1,1), "St. Patrick's Day":(3, 1), "Valentine's Day":(2,1), "Father's Day":(6,1), \
-        "Halloween":(10,1), "Fourth of July":(7,1), "Easter":(4,1), "Mother's Day":(5,1), "Thanksgiving":(11,1), "Christmas":(12,1)}
-
-st.write("""
-We also have 3 years of data so pick a year to gain more insight about.
-""")
+        "Halloween":(10,1), "Fourth of July":(7,1), "Easter":(4,1), "Mother's Day":(5,1),\
+         "Thanksgiving":(11,1), "Christmas":(12,1)}
 
 year = st.selectbox(
     'Select a year',
-    (2019, 2020, 2021)
+    (2019, 2020, 2021), key=1
 )
 
 @st.cache
@@ -184,13 +187,72 @@ def holiday_df(holiday, year):
     ten = grouped.sort_values(by='brand_month_visits', ascending=False).head(10)
     return ten
 
+# def holiday_plot():
+#     ten = holiday_df(holiday, year)
+#     fig, ax = plt.subplots(figsize=(15,8))
+#     plt.bar(ten['brand_month'], ten['brand_month_visits'])
+#     plt.title(f"Top Ten Brands around {holiday} in {year}", fontsize=20)
+#     ax.set_ylabel("Brand Visits", fontsize=15)
+
+#     return fig
+
 def holiday_plot():
     ten = holiday_df(holiday, year)
-    fig, ax = plt.subplots(figsize=(15,8))
-    plt.bar(ten['brand_month'], ten['brand_month_visits'])
-    plt.title(f"Top Ten Brands around {holiday} in {year}", fontsize=20)
-    ax.set_ylabel("Brand Visits", fontsize=15)
-
-    return fig
+    print(holiday, year)
+    chart = alt.Chart(ten).encode(
+        x=alt.X('brand_month', sort='-y', title='Brand Visits'),
+        y=alt.Y('brand_month_visits', title='Brand')
+    ).mark_bar().properties(title=f'Top Ten Brands around {holiday}', width=500)
+    return chart
 
 st.write(holiday_plot())
+
+st.markdown("""
+Walmart and McDonald's seems to always be a high contender. I can imagine families are not too different \
+from my own. On Thanksgiving day, my cousins and I would leave the house where we just \
+ate a huge meal. We would go to McDonald's to get a drink (maybe more food) and then go to Walmart \
+to see the chaotic events of Black Friday.
+
+# Comparing Brands over the Year
+
+We can now compare brand in states over the year. You can select a state and then \
+select a year to see the differences over the year. This will create a line chart \
+based on the top visited brands per month.
+""")
+
+year = st.selectbox(
+    'Select a year',
+    (2019, 2020, 2021), key=2
+)
+
+state = st.selectbox(
+    "Select a state",
+    (state_df().STUSPS.sort_values().to_list()), key=2
+)
+
+def draw_chart(year, state):
+    month = new_df()
+    start_date = str(pd.to_datetime(f'{year}-01-01').date())
+    end_date = str(pd.to_datetime(f'{year}-12-31').date())
+    
+    year_df = month.query(f"date_range_start >= '{start_date}' \
+        & date_range_start <= '{end_date}' & region == '{state.lower()}'")
+    
+    print(month)
+    print(year_df)
+
+    year_df = year_df.groupby(['brand_month', 'date_range_start'], as_index=False).sum()
+    # year
+    yg = year_df.groupby(['date_range_start'], as_index=False).max()
+
+    print(yg)
+
+    chart = alt.Chart(yg).encode(
+        x='date_range_start:T',
+        y='brand_month_visits',
+        color='brand_month'
+    ).mark_line().properties(width=700, height=500)
+
+    return chart
+
+st.write(draw_chart(year, state))

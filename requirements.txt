@@ -2,3 +2,4 @@ pandas
 streamlit
 mpld3
 matplotlib
+altair
