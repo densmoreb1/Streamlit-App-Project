@@ -30,7 +30,6 @@ df.select('*', F.explode('related_same_month_brand'))\
 .drop('related_same_month_brand', 'related_same_day_brand', 'visits_by_day')
 ```
 # View the Data
-We can select to view monthly or daily data for the rest of the charts and graphs here.
 """)
 
 @st.cache
@@ -66,6 +65,7 @@ elif option == 'month':
 
 ## displaying state map
 st.write("""
+
 ## States with most visits
 
 We can view states individually to see their Chipotle locations. The first map is shows \
@@ -121,10 +121,12 @@ elif option == 'month':
 #     int(df[visits].min()), int(df[visits].max()), (int(df[visits].min()), int(df[visits].max()))
 # )
 
+@st.cache
 def get_subset(state, visits):
     subset = grouped.query(f"region == '{state.lower()}'")
     return subset[visits]
 
+@st.cache
 def select_values(min, max, state, visits):
     subset = grouped.query(f"{visits} > {min} & {visits} < {max} & region == '{state.lower()}'")
     return subset[['city', brand, visits]].sort_values(by=visits, ascending=False)
@@ -134,7 +136,7 @@ try:
         'Select a range of values',
         int(get_subset(state, visits).min()), int(get_subset(state, visits).max()), (int(get_subset(state, visits).min()), int(get_subset(state, visits).max()))
     )
-    st.dataframe(select_values(min, max, state, visits), height=250)
+    st.write(select_values(min, max, state, visits), height=250)
 except:
     st.write("### Error, the state is empty")
 
@@ -164,18 +166,26 @@ year = st.selectbox(
     (2019, 2020, 2021)
 )
 
-def holiday_df(holiday, year):
+@st.cache
+def new_df():
     df = deepcopy(month_df())
+    df['date_range_start'] = pd.to_datetime(df['date_range_start'], utc=True)
+    df['date_range_start'] = df.date_range_start.dt.date.astype('string')
+    return df
+
+@st.cache
+def holiday_df(holiday, year):
     date_string = f"""{year}-{holiday_dict[holiday][0]}-{holiday_dict[holiday][1]}"""
     date = str(pd.to_datetime(date_string).date())
 
-    df['date_range_start'] = pd.to_datetime(df['date_range_start'], utc=True)
-    df['date_range_start'] = df.date_range_start.dt.date.astype('string')
-
+    df = new_df()
     subset = df.query(f'date_range_start == "{date}"')
     grouped = subset.groupby(['brand_month'], as_index=False).sum()
     ten = grouped.sort_values(by='brand_month_visits', ascending=False).head(10)
-    
+    return ten
+
+def holiday_plot():
+    ten = holiday_df(holiday, year)
     fig, ax = plt.subplots(figsize=(15,8))
     plt.bar(ten['brand_month'], ten['brand_month_visits'])
     plt.title(f"Top Ten Brands around {holiday} in {year}", fontsize=20)
@@ -183,4 +193,4 @@ def holiday_df(holiday, year):
 
     return fig
 
-st.write(holiday_df(holiday, year))
+st.write(holiday_plot())
