@@ -57,6 +57,7 @@ if option == 'day':
     df = day_df()
     brand = 'brand_day'
     visits = 'brand_day_visits'
+
 elif option == 'month':
     st.dataframe(month_df(), height=250)
     brand = 'brand_month'
@@ -120,11 +121,6 @@ elif option == 'month':
     brand = 'brand_month'
     visits = 'brand_month_visits'
     
-# min, max = st.slider(
-#     'Select a range of values', 
-#     int(df[visits].min()), int(df[visits].max()), (int(df[visits].min()), int(df[visits].max()))
-# )
-
 @st.cache
 def get_subset(state, visits):
     subset = grouped.query(f"region == '{state.lower()}'")
@@ -173,6 +169,7 @@ year = st.selectbox(
 def new_df():
     df = deepcopy(month_df())
     df['date_range_start'] = pd.to_datetime(df['date_range_start'], utc=True)
+    df['month'] = df.date_range_start.dt.month.astype('string')
     df['date_range_start'] = df.date_range_start.dt.date.astype('string')
     return df
 
@@ -187,18 +184,9 @@ def holiday_df(holiday, year):
     ten = grouped.sort_values(by='brand_month_visits', ascending=False).head(10)
     return ten
 
-# def holiday_plot():
-#     ten = holiday_df(holiday, year)
-#     fig, ax = plt.subplots(figsize=(15,8))
-#     plt.bar(ten['brand_month'], ten['brand_month_visits'])
-#     plt.title(f"Top Ten Brands around {holiday} in {year}", fontsize=20)
-#     ax.set_ylabel("Brand Visits", fontsize=15)
-
-#     return fig
-
 def holiday_plot():
     ten = holiday_df(holiday, year)
-    print(holiday, year)
+    # print(holiday, year)
     chart = alt.Chart(ten).encode(
         x=alt.X('brand_month', sort='-y', title='Brand Visits'),
         y=alt.Y('brand_month_visits', title='Brand')
@@ -237,15 +225,16 @@ def draw_chart(year, state):
     
     year_df = month.query(f"date_range_start >= '{start_date}' \
         & date_range_start <= '{end_date}' & region == '{state.lower()}'")
-    
-    print(month)
-    print(year_df)
 
-    year_df = year_df.groupby(['brand_month', 'date_range_start'], as_index=False).sum()
-    # year
-    yg = year_df.groupby(['date_range_start'], as_index=False).max()
+    year_df = year_df.groupby(['brand_month', 'date_range_start', 'month'], as_index=False).sum()
 
-    print(yg)
+    yg = (year_df.sort_values(['date_range_start', 'month', 'brand_month_visits', 'brand_month'], 
+                    ascending=[True, True, False, False])
+    .groupby(['date_range_start', 'month'], 
+                as_index = False, 
+                sort = False)
+    .nth([0,1,2,3,4,5])
+    )
 
     chart = alt.Chart(yg).encode(
         x='date_range_start:T',
