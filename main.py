@@ -34,12 +34,14 @@ df.select('*', F.explode('related_same_month_brand'))\
 
 # @st.cache
 def day_df():
-    day = pd.read_csv('data/day.csv')
+    # day = pd.read_csv('data/day.csv')
+    day = pd.read_parquet('data/day.parquet')
     return day.sort_values(by='date_range_start')
 
 # @st.cache
 def month_df():
-    month = pd.read_csv('data/month.csv')
+    # month = pd.read_csv('data/month.csv')
+    month = pd.read_parquet('data/month.parquet')
     return month.sort_values(by='date_range_start')
 
 @st.cache
@@ -121,12 +123,12 @@ elif option == 'month':
     brand = 'brand_month'
     visits = 'brand_month_visits'
     
-@st.cache
+# @st.cache
 def get_subset(state, visits):
     subset = grouped.query(f"region == '{state.lower()}'")
     return subset[visits]
 
-@st.cache
+# @st.cache
 def select_values(min, max, state, visits):
     subset = grouped.query(f"{visits} > {min} & {visits} < {max} & region == '{state.lower()}'")
     return subset[['city', brand, visits]].sort_values(by=visits, ascending=False)
@@ -165,7 +167,7 @@ year = st.selectbox(
     (2019, 2020, 2021), key=1
 )
 
-@st.cache
+# @st.cache
 def new_df():
     df = deepcopy(month_df())
     df['date_range_start'] = pd.to_datetime(df['date_range_start'], utc=True)
@@ -173,7 +175,7 @@ def new_df():
     df['date_range_start'] = df.date_range_start.dt.date.astype('string')
     return df
 
-@st.cache
+# @st.cache
 def holiday_df(holiday, year):
     date_string = f"""{year}-{holiday_dict[holiday][0]}-{holiday_dict[holiday][1]}"""
     date = str(pd.to_datetime(date_string).date())
