@@ -1,5 +1,4 @@
 from copy import deepcopy
-from turtle import width
 import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
@@ -7,7 +6,6 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import altair as alt
 import mpld3
-import datetime as date
 
 st.markdown("""
 # Exploring Related Same Day Brands
@@ -32,13 +30,13 @@ df.select('*', F.explode('related_same_month_brand'))\
 # View the Data
 """)
 
-# @st.cache
+@st.cache
 def day_df():
     # day = pd.read_csv('data/day.csv')
     day = pd.read_parquet('data/day.parquet')
     return day.sort_values(by='date_range_start')
 
-# @st.cache
+@st.cache
 def month_df():
     # month = pd.read_csv('data/month.csv')
     month = pd.read_parquet('data/month.parquet')
