@@ -53,16 +53,16 @@ option = st.selectbox(
      ('month', 'day'), key=1)
 
 if option == 'day':
-    st.dataframe(day_df(), height=250)
     df = day_df()
+    st.dataframe(df, height=250)
     brand = 'brand_day'
     visits = 'brand_day_visits'
 
 elif option == 'month':
-    st.dataframe(month_df(), height=250)
+    df = month_df()
+    st.dataframe(df, height=250)
     brand = 'brand_month'
     visits = 'brand_month_visits'
-    df = month_df()
 
 ## displaying state map
 st.write("""
@@ -75,6 +75,7 @@ and get a better sense of where these locations are. Unfortunately, the data for
 same day or month visits is not available.
 """)
 
+@st.cache
 def plot_state(state, plot_df):
     # day = day_df()
     d = plot_df
@@ -121,22 +122,22 @@ elif option == 'month':
     brand = 'brand_month'
     visits = 'brand_month_visits'
     
-# @st.cache
-def get_subset(state, visits):
-    subset = grouped.query(f"region == '{state.lower()}'")
+@st.cache
+def get_subset(state, visits, df):
+    subset = df.query(f"region == '{state.lower()}'")
     return subset[visits]
 
-# @st.cache
-def select_values(min, max, state, visits):
-    subset = grouped.query(f"{visits} > {min} & {visits} < {max} & region == '{state.lower()}'")
+@st.cache
+def select_values(min, max, state, visits, df):
+    subset = df.query(f"{visits} > {min} & {visits} < {max} & region == '{state.lower()}'")
     return subset[['city', brand, visits]].sort_values(by=visits, ascending=False)
 
 try:
     min, max = st.slider(
         'Select a range of values',
-        int(get_subset(state, visits).min()), int(get_subset(state, visits).max()), (int(get_subset(state, visits).min()), int(get_subset(state, visits).max()))
+        int(get_subset(state, visits, grouped).min()), int(get_subset(state, visits, grouped).max()), (int(get_subset(state, visits, grouped).min()), int(get_subset(state, visits, grouped).max()))
     )
-    st.write(select_values(min, max, state, visits), height=250)
+    st.write(select_values(min, max, state, visits, grouped), height=250)
 except:
     st.write("### Error, the state is empty")
 
@@ -165,7 +166,7 @@ year = st.selectbox(
     (2019, 2020, 2021), key=1
 )
 
-# @st.cache
+@st.cache
 def new_df():
     df = deepcopy(month_df())
     df['date_range_start'] = pd.to_datetime(df['date_range_start'], utc=True)
@@ -173,7 +174,7 @@ def new_df():
     df['date_range_start'] = df.date_range_start.dt.date.astype('string')
     return df
 
-# @st.cache
+@st.cache
 def holiday_df(holiday, year):
     date_string = f"""{year}-{holiday_dict[holiday][0]}-{holiday_dict[holiday][1]}"""
     date = str(pd.to_datetime(date_string).date())
@@ -184,6 +185,7 @@ def holiday_df(holiday, year):
     ten = grouped.sort_values(by='brand_month_visits', ascending=False).head(10)
     return ten
 
+# @st.cache
 def holiday_plot():
     ten = holiday_df(holiday, year)
     # print(holiday, year)
