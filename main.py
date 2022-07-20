@@ -34,18 +34,18 @@ df.select('*', F.explode('related_same_month_brand'))\
 
 @st.cache
 def day_df():
-    df = pd.read_csv('data/day.csv')
-    return df.sort_values(by='date_range_start')
+    day = pd.read_csv('data/day.csv')
+    return day.sort_values(by='date_range_start')
 
 @st.cache
 def month_df():
-    df = pd.read_csv('data/month.csv')
-    return df.sort_values(by='date_range_start')
+    month = pd.read_csv('data/month.csv')
+    return month.sort_values(by='date_range_start')
 
 @st.cache
 def state_df():
-    df = gpd.read_file('data/state/cb_2021_us_state_20m.shp')
-    return df
+    state = gpd.read_file('data/state/cb_2021_us_state_20m.shp')
+    return state
 
 ## displaying tables
 option = st.selectbox(
@@ -75,9 +75,9 @@ and get a better sense of where these locations are. Unfortunately, the data for
 same day or month visits is not available.
 """)
 
-def plot_state(state, df):
+def plot_state(state, plot_df):
     # day = day_df()
-    d = df
+    d = plot_df
     states = state_df()
     fig, ax = plt.subplots()
     plt.title(f"Chipotle Stores in {state}")
