@@ -32,12 +32,12 @@ df.select('*', F.explode('related_same_month_brand'))\
 # View the Data
 """)
 
-@st.cache
+# @st.cache
 def day_df():
     day = pd.read_csv('data/day.csv')
     return day.sort_values(by='date_range_start')
 
-@st.cache
+# @st.cache
 def month_df():
     month = pd.read_csv('data/month.csv')
     return month.sort_values(by='date_range_start')
