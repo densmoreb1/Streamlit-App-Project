@@ -13,4 +13,4 @@ This is an app made with Streamlit, Docker, and Heroku. I was given data from Sa
 4. This should open a browser, if not then navigate to `localhost:8501`
 
 ## Heroku
-This repository is also connected to a deployed container on Heroku. It can be accessed in the browser at `https://secure-coast-58551.herokuapp.com`
+This repository is also (was, no longer is) connected to a deployed container on Heroku. It can be accessed in the browser at `https://secure-coast-58551.herokuapp.com`
